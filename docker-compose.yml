@@ -1,0 +1,108 @@
+version: "2"
+volumes:
+  bundle:
+  db_data:
+services:
+  consul:
+    image: jgeiger/consul-server
+    ports:
+      - "8300:8300"
+      - "8301:8301"
+      - "8301:8301/udp"
+      - "8302:8302"
+      - "8302:8302/udp"
+      - "8400:8400"
+      - "8500:8500"
+      - "8600:8600"
+      - "8600:8600/udp"
+    command:
+      - "consul"
+      - "agent"
+      - "-server"
+      - "-config-dir=/config"
+      - "-data-dir=/data"
+      - "-bootstrap"
+  registrator:
+    image: gliderlabs/registrator:master
+    volumes:
+      - /var/run/docker.sock:/tmp/docker.sock
+    depends_on:
+      - consul
+    command:
+      - "-internal"
+      - "consul://consul:8500"
+  redis:
+    image: jgeiger/redis
+    ports:
+      - "6379:6379"
+  db:
+    image: postgres:9.5
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  haproxy:
+    image: jgeiger/haproxy-template
+    depends_on:
+      - registrator
+    ports:
+      - "443:443"
+      - "8080:8080"
+    depends_on:
+      - webapp
+    volumes:
+      - ./config/system/certs:/etc/ssl/private:ro
+      - ./config/system/haproxy:/config:ro
+  base_webapp:
+    build: .
+    volumes:
+      - bundle:/usr/local/bundle
+      - $HOME/.ssh/id_rsa:/home/devops/.ssh/id_rsa:ro
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - ZEUSSOCK=/tmp/zeus.sock
+  webapp:
+    extends: base_webapp
+    ports:
+      - "3000"
+    depends_on:
+      - db
+      - redis
+    command:
+      - "bundle"
+      - "exec"
+      - "rails"
+      - "server"
+      - "--pid=/tmp/server.pid"
+      # required to get ipv4 binding outside container
+      - "--binding=0.0.0.0"
+  webapp_test:
+    extends: base_webapp
+    container_name: webapp_test
+    build:
+      context: ./
+      dockerfile: Dockerfile-integration
+    ports:
+      - "5900:5900"
+    depends_on:
+      - db
+      - redis
+    command:
+      - "zeus"
+      - "start"
+  sidekiq:
+    extends: base_webapp
+    depends_on:
+      - db
+      - redis
+    command:
+      - "bundle"
+      - "exec"
+      - "sidekiq"
+      - "--environment"
+      - "development"

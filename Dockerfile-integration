@@ -1,0 +1,8 @@
+FROM jgeiger/rails-integration
+MAINTAINER jgeiger@gmail.com
+
+USER devops
+WORKDIR /app
+
+# Copy the main application.
+ADD . ./

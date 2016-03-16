@@ -1,0 +1,36 @@
+# this ignores the below items for building the docker
+# image. They can still be symlinked back into the container
+# when launched as a shared volume. This makes building faster
+
+*/**/.DS_Store
+
+.git
+*/**/.gitignore
+
+# Ignore vendored gems
+.bundle
+vendor/bundle
+vendor/cache
+public/assets
+
+# Ignore database dir
+db
+
+# Ignore logs and docs
+log/*.log
+tmp
+doc
+README.rdoc
+LICENSE
+VERSION
+README.md
+Changelog.md
+
+# Ignore testing
+spec
+features
+
+# Ignore build files
+Makefile
+Dockerfile
+docker-compose*.yml
