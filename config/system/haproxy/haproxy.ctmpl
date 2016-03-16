@@ -1,0 +1,55 @@
+global
+  maxconn {{key_or_default "service/haproxy/maxconn" "4096"}}
+  chroot /var/lib/haproxy
+  user haproxy
+  group haproxy
+  tune.ssl.default-dh-param 2048
+
+  ssl-default-bind-options no-sslv3
+  ssl-default-bind-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS
+
+  ssl-default-server-options no-sslv3
+  ssl-default-server-ciphers ECDH+AESGCM:DH+AESGCM:ECDH+AES256:DH+AES256:ECDH+AES128:DH+AES:ECDH+3DES:DH+3DES:RSA+AESGCM:RSA+AES:RSA+3DES:!aNULL:!MD5:!DSS
+
+defaults
+  log global
+  log 127.0.0.1    local0
+  log 127.0.0.1    local1 debug
+  mode http
+  option httplog
+  option dontlognull
+  option redispatch
+  retries                 3
+  timeout http-request    10s
+  timeout queue           1m
+  timeout connect         10s
+  timeout client          1m
+  timeout server          1m
+  timeout http-keep-alive 10s
+  timeout check           10s
+
+#stats
+listen stats
+  bind *:8080
+  mode http
+  stats enable
+  stats hide-version
+  stats realm Haproxy\ Statistics
+  stats uri /
+  stats auth stats:stats
+
+frontend https
+  bind *:443 ssl crt /etc/ssl/private/star.dockerdev.local.pem
+  reqadd X-Forwarded-Proto:\ https
+  default_backend webapp
+
+backend webapp
+  balance roundrobin
+  option forwardfor header X-Real-IP
+  http-request set-header X-Forwarded-Port %[dst_port]
+  http-request add-header X-Forwarded-Proto https if { ssl_fc }
+  option http-server-close
+  option httplog
+  {{range service "railsdockerdevelopment_webapp"}}
+  server {{.ID}} {{.Address}}:{{.Port}} check
+  {{end}}

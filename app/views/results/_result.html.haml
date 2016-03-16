@@ -1,0 +1,7 @@
+%tr{ class: ("table-success" if result.enqueued_by_host == @current_host) }
+  %td
+    = result.enqueued_by_host
+  %td
+    = result.run_on_host
+  %td
+    = result.created_at

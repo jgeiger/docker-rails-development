@@ -1,0 +1,8 @@
+{
+  "consul": "consul:8500",
+  "template": {
+    "source": "/config/haproxy.ctmpl",
+    "destination": "/etc/haproxy/haproxy.cfg",
+    "command": "haproxy -f /etc/haproxy/haproxy.cfg -sf $(pidof haproxy) &"
+  }
+}
