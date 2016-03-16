@@ -1,7 +1,7 @@
 #Docker for Mac
 
 ####Install Docker Toolbox (http://www.docker.com/products/docker-toolbox)
-https://github.com/docker/toolbox/releases/download/v1.10.2/DockerToolbox-1.10.2.pkg
+https://github.com/docker/toolbox/releases/download/v1.10.3/DockerToolbox-1.10.3.pkg
 
 ####Install dinghy (https://github.com/codekitchen/dinghy)
 ```shell
@@ -87,7 +87,6 @@ sudo echo "127.0.0.1 docker.local webapp.dockerdev.local redis db" >> /etc/hosts
 
 #### Pull the base docker images from docker hub
 ```shell
-docker pull ubuntu:14.04
 docker pull postgres:9.5
 docker pull gliderlabs/registrator:master
 docker pull jgeiger/consul-server
